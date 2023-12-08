@@ -1,0 +1,20 @@
+[32m2023-12-07 22:58:56 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - 98554 - LOGS_CAPTURED - Started capturing logs in process (pid: 98554).
+[32m2023-12-07 22:58:56 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - 98554 - fetch_usgs_data - STEP_START - Started execution of step "fetch_usgs_data".
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - fetch_usgs_data - Sample data from combined DataFrame:
+   siteCode                       siteName                       dateTime  cfs
+0  09379500  SAN JUAN RIVER NEAR BLUFF, UT  2022-12-07T00:00:00.000-07:00  684
+1  09379500  SAN JUAN RIVER NEAR BLUFF, UT  2022-12-07T04:00:00.000-07:00  702
+2  09379500  SAN JUAN RIVER NEAR BLUFF, UT  2022-12-07T08:00:00.000-07:00  702
+3  09379500  SAN JUAN RIVER NEAR BLUFF, UT  2022-12-07T12:00:00.000-07:00  702
+4  09379500  SAN JUAN RIVER NEAR BLUFF, UT  2022-12-07T16:00:00.000-07:00  712
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - fetch_usgs_data - DataFrame structure:
+siteCode    object
+siteName    object
+dateTime    object
+cfs         object
+dtype: object
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - 98554 - fetch_usgs_data - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - fetch_usgs_data - Writing file at: /Users/resford/Documents/GitHub/open-source-stack/tmpccb8ihr5/storage/fetch_usgs_data using PickledObjectFilesystemIOManager...
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - 98554 - fetch_usgs_data - ASSET_MATERIALIZATION - Materialized value fetch_usgs_data.
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - 98554 - fetch_usgs_data - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
+[32m2023-12-07 22:59:00 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 27df311b-8b57-4b92-9a30-05d6f47663e7 - 98554 - fetch_usgs_data - STEP_SUCCESS - Finished execution of step "fetch_usgs_data" in 4.6s.
