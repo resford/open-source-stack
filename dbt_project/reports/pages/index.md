@@ -8,21 +8,20 @@ See the [About](/about) page for more information about the project.
 
 ## River Data
 
-```sql all_river
-select *
-from test
-limit 500
+```sql usgs_test
+SELECT 
+*
+FROM usgs_test
 ```
 
-## Bird Data
+<DataTable data="{usgs_test}" search="true" />
 
-```sql all_birds
-select *
-from all_birds
-limit 500
-```
-
-<DataTable data="{all_birds}" search="true" />
+<LineChart
+    data={usgs_test}
+    x='cfs'
+    y='dateTime'
+    series='siteCode'
+/>
 
 ```sql count_birds
 select

@@ -1,0 +1,14 @@
+Running with dbt=1.7.1
+Registered adapter: duckdb=1.7.0
+Unable to do partial parsing because profile has changed
+Unable to do partial parsing because a project config has changed
+[[33mWARNING[0m]: Configuration paths exist in your dbt_project.yml file which do not apply to any resources.
+There are 1 unused configuration paths:
+- models.dbirdt.example
+Found 5 models, 6 sources, 0 exposures, 0 metrics, 391 macros, 0 groups, 0 semantic models
+
+
+Finished running  in 0 hours 0 minutes and 0.03 seconds (0.03s).
+Encountered an error:
+Runtime Error
+  IO Error: Could not set lock on file "/Users/resford/Documents/GitHub/open-source-stack/dbt_project/reports/osmds.db": Resource temporarily unavailable

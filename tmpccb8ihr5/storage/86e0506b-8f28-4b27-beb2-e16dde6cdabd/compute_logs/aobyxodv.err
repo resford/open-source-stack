@@ -1,0 +1,38 @@
+[32m2023-12-07 23:52:16 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 86e0506b-8f28-4b27-beb2-e16dde6cdabd - 1808 - LOGS_CAPTURED - Started capturing logs in process (pid: 1808).
+[32m2023-12-07 23:52:16 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 86e0506b-8f28-4b27-beb2-e16dde6cdabd - 1808 - dbt_birds - STEP_START - Started execution of step "dbt_birds".
+[32m2023-12-07 23:52:16 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 86e0506b-8f28-4b27-beb2-e16dde6cdabd - dbt_birds - A dbt subsetted execution is being performed. Overriding default dbt selection arguments `['--select', 'fqn:*']` with arguments: `['--select', 'fqn:dbirdt.usgs_test']`
+[32m2023-12-07 23:52:16 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 86e0506b-8f28-4b27-beb2-e16dde6cdabd - dbt_birds - Copying `/Users/resford/Documents/GitHub/open-source-stack/dbt_project/target/partial_parse.msgpack` to `/Users/resford/Documents/GitHub/open-source-stack/dbt_project/target/dbt_birds-86e0506-40857cd/partial_parse.msgpack` to take advantage of partial parsing.
+[32m2023-12-07 23:52:16 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 86e0506b-8f28-4b27-beb2-e16dde6cdabd - dbt_birds - Running dbt command: `dbt build --select fqn:dbirdt.usgs_test`.
+[32m2023-12-07 23:52:22 -0700[0m - dagster - [34mERROR[0m - [31m__ASSET_JOB - 86e0506b-8f28-4b27-beb2-e16dde6cdabd - 1808 - dbt_birds - STEP_FAILURE - Execution of step "dbt_birds" failed.
+
+dagster_dbt.errors.DagsterDbtCliRuntimeError: The dbt CLI process failed with exit code 2. Check the stdout in the Dagster compute logs for the full information about the error, or view the dbt debug log: /Users/resford/Documents/GitHub/open-source-stack/dbt_project/target/dbt_birds-86e0506-40857cd/dbt.log.
+
+Errors parsed from dbt logs:
+Encountered an error:
+Runtime Error
+  IO Error: Could not set lock on file "/Users/resford/Documents/GitHub/open-source-stack/dbt_project/reports/osmds.db": Resource temporarily unavailable
+
+Stack Trace:
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_core/execution/plan/execute_plan.py", line 275, in dagster_event_sequence_for_step
+    for step_event in check.generator(step_events):
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_core/execution/plan/execute_step.py", line 478, in core_dagster_event_sequence_for_step
+    for user_event in _step_output_error_checked_user_event_sequence(
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_core/execution/plan/execute_step.py", line 160, in _step_output_error_checked_user_event_sequence
+    for user_event in user_event_sequence:
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_core/execution/plan/execute_step.py", line 95, in _process_asset_results_to_events
+    for user_event in user_event_sequence:
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_core/execution/plan/compute.py", line 212, in execute_core_compute
+    for step_output in _yield_compute_results(step_context, inputs, compute_fn, compute_context):
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_core/execution/plan/compute.py", line 181, in _yield_compute_results
+    for event in iterate_with_context(
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster/_utils/__init__.py", line 465, in iterate_with_context
+    next_output = next(iterator)
+  File "/Users/resford/Documents/GitHub/open-source-stack/opensource_mds/assets.py", line 436, in dbt_birds
+    yield from dbt.cli(["build"], context=context).stream()
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster_dbt/core/resources_v2.py", line 389, in stream
+    for event in self.stream_raw_events():
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster_dbt/core/resources_v2.py", line 425, in stream_raw_events
+    self._raise_on_error()
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages/dagster_dbt/core/resources_v2.py", line 483, in _raise_on_error
+    raise DagsterDbtCliRuntimeError(
+[0m
