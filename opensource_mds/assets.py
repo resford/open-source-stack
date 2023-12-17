@@ -9,6 +9,8 @@ import requests
 import subprocess
 from dagster import (
     AssetExecutionContext,
+    AssetMaterialization,
+    AssetKey,
     AssetSpec,
     Backoff,
     RetryPolicy,
@@ -28,6 +30,110 @@ retry_policy = RetryPolicy(
     backoff=Backoff.EXPONENTIAL,
 )
 
+
+@asset(compute_kind="python", group_name="api_call")
+def fetch_usgs_data(context):
+    all_data = []
+
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=7300)
+    start_date_str = start_date.strftime('%Y-%m-%d')
+    end_date_str = end_date.strftime('%Y-%m-%d')
+
+    for site in constants.USGS_SITES:
+        params = {
+            "format": "json",
+            "sites": site,
+            "startDT": start_date_str,
+            "endDT": end_date_str,
+            "parameterCd": constants.PARAMETER_CODE,
+        }
+
+        response = requests.get(constants.USGS_BASE_URL, params=params)
+        if response.status_code != 200:
+            context.log.error(f"Failed to fetch data from USGS for site {site}")
+            continue
+
+        data = response.json()
+        for series in data['value']['timeSeries']:
+            if series['variable']['variableCode'][0]['value'] == '00060':  # Streamflow
+                site_code = series['sourceInfo']['siteCode'][0]['value']
+                site_name = series['sourceInfo']['siteName']
+
+                for value in series['values'][0]['value']:
+                    # Parse the dateTime and check if it's on every fourth hour
+                    datetime_obj = datetime.fromisoformat(value['dateTime'])
+                    if datetime_obj.hour % 8 == 0 and datetime_obj.minute == 0 and datetime_obj.second == 0:
+                        all_data.append({
+                            "site_code": site_code,
+                            "site_name": site_name,
+                            "date_time": value['dateTime'],
+                            "cfs": value['value']
+                        })
+
+    # Create DataFrame from the collected data
+    combined_df = pd.DataFrame(all_data)
+
+    # Log the first few rows and DataFrame structure for debugging
+    context.log.info(f"Sample data from combined DataFrame:\n{combined_df.head()}")
+    context.log.info(f"DataFrame structure:\n{combined_df.dtypes}")
+
+    return combined_df
+
+@asset(compute_kind="python", group_name="api_call", required_resource_keys={"duckdb"})
+def load_data_to_duckdb(context: AssetExecutionContext, fetch_usgs_data):
+    duckdb: DuckDBResource = context.resources.duckdb
+    df = fetch_usgs_data
+
+    with duckdb.get_connection() as conn:
+        try:
+            # Load data into lake_river_flow table
+            conn.execute("""
+            CREATE OR REPLACE TABLE lake_river_flow AS (
+                SELECT site_code
+                    ,date_time
+                    ,cfs 
+                FROM df )
+            """)
+            # Log materialization for lake_river_flow table
+            context.log_event(AssetMaterialization(
+                asset_key=AssetKey("lake_river_flow"),
+                description="Created the lake_river_flow table."
+            ))
+
+            # Load data into lake_river_sites table
+            conn.execute("""
+            CREATE OR REPLACE TABLE lake_river_sites AS (
+                SELECT site_code
+                    ,site_name
+                FROM df )
+            """)
+            # Log materialization for lake_river_sites table
+            context.log_event(AssetMaterialization(
+                asset_key=AssetKey("lake_river_sites"),
+                description="Created the lake_river_sites table."
+            ))
+
+            context.log.info("Data loaded into DuckDB and checkpoint executed")
+
+        except Exception as e:
+            context.log.error(f"Error loading data into DuckDB: {e}")
+            raise
+
+# Correctly define the asset with dependencies
+@asset(deps=[load_data_to_duckdb],
+    compute_kind="duckdb",
+    group_name="prepared",
+    retry_policy=retry_policy,)
+def lake_river_flow(context: AssetExecutionContext):
+    context.log.info("lake_river_flow executed after load_data_to_duckdb")
+
+@asset(deps=[load_data_to_duckdb],
+    compute_kind="duckdb",
+    group_name="prepared",
+    retry_policy=retry_policy,)
+def lake_river_sites(context: AssetExecutionContext):
+    context.log.info("lake_river_sites executed after load_data_to_duckdb")
 
 def download_and_extract_data(
     context: AssetExecutionContext, url: str
@@ -155,85 +261,6 @@ def birds(context: AssetExecutionContext, duckdb: DuckDBResource):
         }
     )
 
-@asset
-def fetch_usgs_data(context):
-    all_data = []
-
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=365)
-    start_date_str = start_date.strftime('%Y-%m-%d')
-    end_date_str = end_date.strftime('%Y-%m-%d')
-
-    for site in constants.USGS_SITES:
-        params = {
-            "format": "json",
-            "sites": site,
-            "startDT": start_date_str,
-            "endDT": end_date_str,
-            "parameterCd": constants.PARAMETER_CODE,
-        }
-
-        response = requests.get(constants.USGS_BASE_URL, params=params)
-        if response.status_code != 200:
-            context.log.error(f"Failed to fetch data from USGS for site {site}")
-            continue
-
-        data = response.json()
-        for series in data['value']['timeSeries']:
-            if series['variable']['variableCode'][0]['value'] == '00060':  # Streamflow
-                site_code = series['sourceInfo']['siteCode'][0]['value']
-                site_name = series['sourceInfo']['siteName']
-
-                for value in series['values'][0]['value']:
-                    # Parse the dateTime and check if it's on every fourth hour
-                    datetime_obj = datetime.fromisoformat(value['dateTime'])
-                    if datetime_obj.hour % 4 == 0 and datetime_obj.minute == 0 and datetime_obj.second == 0:
-                        all_data.append({
-                            "siteCode": site_code,
-                            "siteName": site_name,
-                            "dateTime": value['dateTime'],
-                            "cfs": value['value']
-                        })
-
-    # Create DataFrame from the collected data
-    combined_df = pd.DataFrame(all_data)
-
-    # Log the first few rows and DataFrame structure for debugging
-    context.log.info(f"Sample data from combined DataFrame:\n{combined_df.head()}")
-    context.log.info(f"DataFrame structure:\n{combined_df.dtypes}")
-
-    return combined_df
-
-@asset(required_resource_keys={"duckdb"})
-def load_data_to_duckdb(context: AssetExecutionContext, fetch_usgs_data):
-    duckdb: DuckDBResource = context.resources.duckdb
-    df = fetch_usgs_data
-
-    with duckdb.get_connection() as conn:
-        try:
-            # Load data into base_river_flow table
-            conn.execute(
-                """CREATE OR REPLACE TABLE base_river_flow AS (
-                    SELECT "siteCode", "dateTime", "cfs"
-                    FROM df)
-                """
-            )
-
-            # Load distinct site data into dim_river_sites table
-            conn.execute(
-                """CREATE OR REPLACE TABLE dim_river_sites AS (
-                    SELECT DISTINCT "siteCode", "siteName"
-                    FROM df)
-                """
-            )
-
-            conn.execute("CHECKPOINT")
-            context.log.info("Data loaded and checkpoint executed")
-
-        except Exception as e:
-            context.log.error(f"Error loading data into DuckDB: {e}")
-            raise
-
 
 @asset(
     deps=[species_translation_data],
@@ -267,7 +294,6 @@ def species(context: AssetExecutionContext, duckdb: DuckDBResource):
     )
 
     context.log.info("Created species table")
-
 
 @asset(
     deps=[site_description_data],

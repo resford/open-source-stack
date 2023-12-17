@@ -6,4 +6,5 @@ sources:
       - name: birds
       - name: sites
       - name: species
-      - name: base_river_flow
+      - name: lake_river_flow
+      - name: lake_river_sites
