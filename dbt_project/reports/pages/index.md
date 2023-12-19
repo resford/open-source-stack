@@ -8,19 +8,27 @@ See the [About](/about) page for more information about the project.
 
 ## River Data
 
-```sql usgs_test
-SELECT 
-*
-FROM usgs_test
+```sql stg_river_data
+select
+    year,
+    month_day,
+    avg(avg_cfs) as avg_flow,
+    -- Create a sortable date format (assuming all data is from the same century)
+    cast('2000-' || month_day as date) as sortable_date
+from stg_river_data
+group by 1, 2
+order by sortable_date asc
 ```
 
-<DataTable data="{usgs_test}" search="true" />
+
+<DataTable data="{stg_river_data}" search="true" />
 
 <LineChart
-    data={usgs_test}
-    x='cfs'
-    y='dateTime'
-    series='siteCode'
+    data={stg_river_data}
+    x='sortable_date'
+    y='avg_flow'
+    series='year'
+    xFmt="mmmm"
 />
 
 ```sql count_birds
